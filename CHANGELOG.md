@@ -1,0 +1,123 @@
+# Changelog
+
+## Unreleased
+
+- The Watcher panel is now a frosted sheet: an 86%-opaque surface over a 28px backdrop blur with a translucent border, and the inner surfaces (HUD top strip, timing panel, inspector column, active chips) follow it through two panel-scoped variables. Text contrast is unchanged, the settings page keeps its solid surfaces, and `prefers-reduced-transparency: reduce` restores the solid sheet.
+- A resized panel is now a remembered preference: the size persists in `localStorage` (clamped to the current viewport on restore) across reopens, page refreshes, and app restarts. A size restored from storage may be shrunk on its next drag (a restored size is a preference, not a floor), and double-clicking the corner grip returns the panel to its anchored auto layout — previously a resize could never be undone. A shrinking window now pulls the panel and its size back on-screen instead of stranding it off-viewport.
+- The settings scan now truncates by recency: `scanSessions` sorts unique sessions by `updatedAt` (descending) before applying the cap, so a capped aggregate always covers the newest sessions instead of an arbitrary list prefix. The settings page raises its scan limit to 500 (the existing internal ceiling) and says so when truncated: the "有统计的对话" line shows `valid / scanned` plus a "仅统计最近 N / 共 M" footnote instead of silently under-reporting.
+- Sessions without an `updatedAt` stamp are no longer bucketed into today's column of the daily chart; they now stay out of every day bucket rather than inflating the newest bar.
+- The HUD heading no longer labels whole-session totals as "本轮": before the first Turn starts, the heading switches to "全会话" with a "本轮未开始 · 已显示全会话" note. The context line is likewise relabelled "累计输入" in session scope (it is cumulative input, not a context size); "上下文" stays in turn scope.
+- The TimingPanel live `t/s` badge is finally wired: the Watcher panel passes the current Turn's measured decode throughput into the HUD, so the speed dot shows while a turn has both output tokens and decode time. Session scope intentionally omits it (no single throughput semantics).
+- The header eye button's tooltip now mirrors its live state (`Watcher · 正在执行`), and the settings refresh button explains why it is disabled when the session remote is unavailable.
+
+## 0.6.2 — 2026-09-28
+
+- The projection fold copies only the state branches an event writes instead of `structuredClone`-ing the whole state per event. The host contract is unchanged: a handled event returns a fresh reference, an ignored one returns the same reference, and previously published states are never mutated (now pinned by a test).
+- Oversized payloads are rejected in `fingerprint` before serialization (a cheap structural size pre-check), so multi-MB write/edit arguments no longer pay a full `JSON.stringify` only to be dropped. Hash values are unchanged.
+- Usage reports that only carry `totalTokens` are metered as unsplit tokens instead of being dropped; the pricing layer already shows unsplit tokens as 未知, never $0. Partial bucket shapes are still rejected.
+- One `tool/result` message can settle several `tool-result` blocks (batched parallel calls); previously only the first block was settled and the rest leaked as pending tool time. The callId fallback also accepts a top-level `callId`.
+- Restored projection state keeps each model row's `effort` tag: `stateSchema` declared it for the wire view but stripped it from state, so a restored session could split one model into duplicate rows.
+- A stale event `seq` (state regression) now warns once per session via `ctx.logger` instead of silently freezing the fold with no symptom.
+- Client render costs that used to run at the 1Hz live clock are memoized: group clustering, per-item position and source-step lookups (was O(n²) per render), the stacked line spline, and the HUD cost estimate. The number formatter is cached instead of rebuilt per call.
+- The model scope filter keys on provider/model/effort instead of list position, so a re-sorted model list cannot silently retarget the selection; donut hover state and list keys use model identity for the same reason.
+- The work-path follow snapshot reuses its previous object while unchanged, so scrolling no longer re-renders the panel per scroll event. Panel resizing coalesces pointer moves to one commit per frame and flushes the last one on release.
+- The picture merge is idempotent per snapshot (StrictMode double renders cannot double-merge), the follow effect tracks the picture instead of only the last-activity key, and the HUD collapse toggle writes `localStorage` outside the state updater.
+- The client bundle is minified (448KB → 260KB, gzip 63KB) with the sourcemap kept for debugging; the node-side projection stays unminified and readable. Icon names survive as external property names, and the presentation contract still pins them.
+- Fixed the vendored client-build adapter externalizing all local modules on Windows: its "is local" check only recognized `./` and `/` prefixes, while bundler-resolved ids are drive-letter paths, so `lib/dsh-watcher.js` was emitted as a thin wrapper importing an unpublished `./insights/projection.ts`. `isAbsolute()` now covers both.
+
+## 0.6.1 — 2026-09-24
+
+- Prove Watcher on official DeepSeek Harness **0.1.7-rc.2** (`dsh-v0.1.7-rc.2`, `@deepseek-ai/dsh@0.1.7-rc.2`, commit `477b4f420553e8a52c2fbccc464d7561b239c443`). Dev pins are `0.1.7-rc.2`. `@deepseek-ai/dsh-*` peers stay `>=0.1.7-rc.1 <0.1.8`, which already accepts `0.1.7-rc.2` and still rejects `0.1.7-alpha.*`. `@deepseek-ai/cordis` stays `~4.0.4`.
+- Keep the rc.1 stroke icons: `IconChevronRightOutlineRegular`, `IconRefreshOutlineRegular`, `IconCheckOutlineRegular`, and `IconCopyOutlineRegular`. rc.2 still does not export `IconChevronRightOutline14`, `IconRefreshOutline14`, `IconCheckOutline16`, or `IconCopyOutline16`.
+- The vendored client-build adapter from PR #13 remains the build path. The Watcher client entry, CSS modules, and Regular icon names are the same bytes this release ships.
+
+## 0.6.0 — 2026-09-23
+
+- Target official DeepSeek Harness **0.1.7-rc.1** (`dsh-v0.1.7-rc.1`, `@deepseek-ai/dsh@0.1.7-rc.1`, commit `46a7f68b0922371ce7144b668b90e377d8e799f4`). `@deepseek-ai/dsh-*` peers are `>=0.1.7-rc.1 <0.1.8`, which accepts `0.1.7-rc.1` and rejects `0.1.7-alpha.*`. `@deepseek-ai/cordis` peer is `~4.0.4`.
+- Client icons follow the rc.1 stroke set: `IconChevronRightOutlineRegular`, `IconRefreshOutlineRegular`, `IconCheckOutlineRegular`, and `IconCopyOutlineRegular`. rc.1 removed the size-suffixed names (`Outline14` / `Outline16`) with no aliases. Main at 0.5.1 still used those names because 0.1.5-rc.3 still exported them.
+- Read, diff, and terminal cards supply the rc.1 toolbar and `noExitCode` labels. The diff card no longer passes the removed `files` label.
+- The header utility reads the waiting interaction from `useSessionStatus`. rc.1 no longer passes `useSessionPendingInteraction` into that slot.
+- A running tool call in the `preparing` phase has no arguments yet. Only the `start` phase supplies `argsRaw`.
+
+## 0.5.1 — 2026-09-22
+
+- Target official DeepSeek Harness **0.1.5-rc.3** (`dsh-v0.1.5-rc.3`, `@deepseek-ai/dsh@0.1.5-rc.3`). `@deepseek-ai/dsh-*` peers are `^0.1.5-rc.3`, which accepts `0.1.5-rc.3`. The previous `^0.1.2-rc.1` range does not.
+- Client icons stay `IconChevronRightOutline14`, `IconRefreshOutline14`, `IconCheckOutline16`, and `IconCopyOutline16`. Those exports still exist on 0.1.5-rc.3.
+- `pnpm test` typechecks against the 0.1.5-rc.3 packages. `@types/node` is a devDependency so that check resolves Node types without a Harness checkout.
+
+## 0.5.0 — 2026-09-21
+
+- The panel is resizable from its right edge, bottom edge, and the corner grip. The panel frame stays put while dragging — only the size changes — and the floor is the size it opened at, so it can grow but never shrink below the layout it needs.
+- The insights HUD collapses to its one-line top bar via a `▾` toggle next to the scope switch; the choice is remembered in `localStorage`.
+- `定位现场` now actually lands on the failing work: it finds the item matching the alert's turn and step, opens the inspector on it, and scrolls the rail to that turn instead of scrolling to a bare turn header with nothing highlighted.
+- Repeated-failure cards no longer duplicate: the finding id is anchored on the operation signature instead of the first failing seq, so a chain that grows past the trimmed history updates its single card in place. Titles now name the turn (`第 N 轮 · 同一操作连续失败 N 次`).
+
+## 0.4.5 — 2026-09-21
+
+- Closing the inspector no longer silently re-arms follow. The `←` back control now clears the pinned selection and leaves the rail where the user left it; only the `查看最新` unread pill still jumps to the newest work.
+- Insights settings no longer rescans the whole session list on the first manual range pick: `userPickedRange` is a ref now, so the scan effect runs once per `remote` change. The manual refresh button also no longer writes state after the panel unmounts.
+- The Host projection state no longer stores a copy of its own wire view. `viewOf` now derives and caches the view by state identity, so every persisted checkpoint and every per-event `structuredClone` stops carrying a redundant snapshot of itself.
+- Timing panel hover card stops claiming the non-terminal slice is "文件读写": it is every non-bash tool, so the title, total, per-call average and verdict labels now say what the number actually is.
+- Removed the dead auto-load `useEffect` stub in the Watcher panel and the contract test that pinned it; the test now asserts the explicit history-load button instead.
+- Removed the unused `PRICING_OVERRIDE_FILE` constant that pointed at a file path nothing ever wrote.
+- Projection warm-up failures are logged via `ctx.logger.warn` instead of being silently swallowed.
+
+## 0.4.4 — 2026-09-19
+
+- Fixed the docked detail column having no way back. `返回工作路径` was hidden by CSS at desktop width, so an opened inspector could not be collapsed at all.
+- Closing and opening the inspector is one motion instead of an instant mount/unmount: the detail content leaves toward the work path first, then the column narrows, so the closing edge never slices a readable line. Opening runs the same beats in reverse.
+- Fixed the whole Watcher panel flicking left and right during that motion. A clamped panel derives its inline `left` from its own width, and the resize observer re-derived it a frame after layout; the measured frame is now pinned for the transition so only the left edge moves.
+- Fixed the inspector header's status line (`对话轮次 … · … 个步骤 · …`) slipping under the work-path card: docked children now use `border-box`, and an over-long status or metadata line wraps instead of being covered.
+- Contract tests now pin the docked close control, the content-first collapse beat, the header line staying inside the column, and the pinned panel frame.
+
+
+## 0.4.3 — 2026-09-19
+
+- npm release of the estimated-cost feature set (same as git `0.4.2`). Use this tag on the registry; `0.4.2` was staged but never became installable.
+
+## 0.4.2 — 2026-09-19
+
+- Added **估算费用 / Estimated cost** next to total token usage on the Watcher insights HUD and the settings summary. Input, output, and cache buckets are priced from the matching rate; a missing model or missing bucket shows **未知 / Unknown** and is never treated as $0.
+- Default list prices live in `pricing/models.yaml` (USD per 1M tokens). Official preferred rows win for DeepSeek off-peak (2026-09-18), MiniMax-M2.7 / highspeed pay-as-you-go (2026-09-18), and Anthropic flagship (2026-09-19). Other mainstream OpenAI / Gemini / Grok / GLM / Qwen rows are OpenRouter USD/1M as of 2026-09-19 and may differ from vendor list prices. Rates lag official pages. v1 does not fetch live prices.
+- Settings hero Token / 估算费用 share one two-column skeleton (caption, same-size number). The caption already says 估算费用, so **估算，非账单** is not repeated under the dollar. Partial estimates keep the known dollar in the main number and add a quiet **含未标价模型 / Some models unpriced** line only when needed — never `$x + 未知`.
+- Settings price editor opens with the **currently effective** table (defaults filled in). Save stores only the diff vs defaults in `localStorage['dsh-watcher:pricing-override:v1']`; reset restores defaults in the editor. Missing rates still show 未知, never $0.
+
+## 0.4.1 — 2026-09-18
+
+- Fixed chart hover cards being cut off at the panel edge. Bar, stacked-line, and heatmap popovers are now portalled to the document body and clamped into the viewport, so a card opened on a late bar keeps its model names, token values, and percentages readable instead of losing its right-hand side to the panel's `overflow: hidden`.
+- Hover cards are anchored to the measured bar/cell/point rectangle rather than a percentage of the chart width, so they follow their own bar instead of the chart's midpoint.
+- The heatmap popover now closes when the pointer leaves the chart area.
+
+- First-turn `本轮` HUD now copies `request/header` into the open `turn.route`, so the tag shows the real model instead of the initial `unknown` snapshot.
+- Stock install is `dsh plugin --profile web add github:daha1216/dsh-watcher` (pnpm on PATH, then restart the Host and reload). `dsh.bundle.patch` and committed `lib/` make that git spec boot without a `prepare` script.
+
+- Opening Watcher now restores every older conversation Turn automatically through RC8's public Session paging API. Normal use has no manual "load all" step; paging progress is passive, and a retry appears only when the official loader is busy or cannot advance.
+- Added whole-session Turn/Step projections so the progressive UI can show loaded-versus-total evidence while RC8 pages arrive.
+
+- Added independent disclosure for conversation Turns, phases, Steps, and repeated-operation clusters.
+- Added `逐项 / 归类` observation modes over the same immutable execution evidence.
+- Kept singleton actions direct in grouped mode and made every `×N` summary expandable to its exact source occurrences.
+- Restricted grouping so different Bash, Glob, Grep, and search arguments never merge from a shared cwd, path, tool name, or translated label.
+- Added evidence-backed grouping for repeated exact calls, mutable operations on one target, and reads of one exact file target.
+- Fixed delayed approval/interaction records re-inserting an earlier Step below a later Step; Turn and Step coordinates now own the rail order, while event sequence only orders records inside one Step.
+- Replaced the ambiguous mathematical lower-bound label (`≥`) with `已记录 … · 开头未载入` when RC8 omits a Turn's starting boundary.
+
+## 0.3.0 — 2026-08-21
+
+- Added a session wall-clock ledger: complete/current-window span, time inside conversation Turns, and gaps between Turns.
+- Added elapsed time at every diagnostic level: conversation Turn, phase, Step, and individual execution.
+- Added per-conversation-turn total duration and live elapsed time.
+- Added model time, tool time, first-token latency, and measured decode throughput.
+- Kept token speed evidence-based: provider output tokens divided by decode time only, with no fallback estimates.
+- Fixed live tool results falling into session preparation when Trajectory omitted their location but the official Chat index still had it.
+- Replaced the action-implying `需要处理` label with evidence-only `有失败记录`; only a pending approval or question says `等待你`.
+- Replaced the game-like Chinese term `回合` with `对话轮次` labels.
+
+## 0.2.0 — 2026-08-20
+
+- First public release under the Watcher name.
+- Added a truthful four-level work path: turns, phases, steps, and executions.
+- Preserved parallel branches and individual execution evidence.
+- Added typed result readers for terminal output, files, diffs, JSON, Markdown, and raw data.
+- Added Follow behavior, responsive drill-down, reduced-motion support, and subtle live eye motion.
+- Targeted DeepSeek Harness `0.1.0-rc.8` and the dshx external client build contract.

@@ -1,0 +1,9 @@
+node_modules
+lib/types/
+coverage/
+.dshx/
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*
+.cursor
