@@ -651,8 +651,8 @@
 
 .railLine {
   position: absolute;
-  top: 18px;
-  bottom: 18px;
+  top: 14px;
+  bottom: 14px;
   left: 23px;
   width: 1px;
   background: var(--dsw-alias-border-l2);
@@ -664,27 +664,29 @@
   z-index: 1;
   box-sizing: border-box;
   width: 100%;
-  padding: 3px 0 11px;
+  padding: 1px 0 5px;
 }
 
 .phase + .phase {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .phaseHeader {
   position: relative;
 }
 
+/* 每阶段一行：标记 | 箭头 | 标题+徽章（弹性） | 统计（右侧），
+ * 行底一条按耗时占比的状态色细线，扫一眼就知道时间花在哪。 */
 .phaseToggle {
   position: relative;
   display: grid;
-  grid-template-columns: 10px 12px minmax(0, 1fr);
+  grid-template-columns: 8px 11px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   box-sizing: border-box;
   width: 100%;
-  min-height: 42px;
-  padding: 3px 8px 3px 0;
+  min-height: 34px;
+  padding: 2px 8px 3px 0;
   border: 0;
   border-radius: 7px;
   background: transparent;
@@ -719,11 +721,11 @@
   position: relative;
   box-sizing: border-box;
   display: block;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--dsw-alias-label-tertiary);
-  box-shadow: 0 0 0 4px var(--dsw-specific-menu);
+  box-shadow: 0 0 0 3px var(--dsw-specific-menu);
 }
 
 .phaseMarker[data-state='active'],
@@ -752,7 +754,6 @@
   background: var(--dsw-specific-menu);
 }
 
-.phaseCopy,
 .occurrenceCopy {
   display: flex;
   min-width: 0;
@@ -762,7 +763,7 @@
 .phaseTitleLine {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -770,23 +771,41 @@
   min-width: 0;
   overflow: hidden;
   color: var(--dsw-alias-label-primary);
-  font-size: 15px;
-  font-weight: 550;
-  line-height: 21px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .phaseMeta {
-  margin-top: 1px;
+  margin: 0;
   overflow: hidden;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
-  line-height: 18px;
+  line-height: 16px;
+  text-align: right;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* 耗时占比条：贴在阶段行底，宽 = 该阶段耗时 / 本轮总耗时 */
+.phaseDurBar {
+  position: absolute;
+  bottom: 0;
+  left: 26px;
+  height: 2px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--dsw-alias-label-tertiary) 45%, transparent);
+  pointer-events: none;
+}
+
+.phaseDurBar[data-state='active'],
+.phaseDurBar[data-state='current'] { background: color-mix(in srgb, var(--dsw-static-deepseek-450) 55%, transparent); }
+.phaseDurBar[data-state='waiting'] { background: color-mix(in srgb, var(--dsw-alias-state-warn-primary) 55%, transparent); }
+.phaseDurBar[data-state='failure'],
+.phaseDurBar[data-state='interrupted'] { background: color-mix(in srgb, var(--dsw-alias-state-error-primary) 55%, transparent); }
 
 .groupBadges {
   display: inline-flex;
@@ -801,15 +820,15 @@
 .parallelLabel {
   display: inline-flex;
   align-items: center;
-  min-height: 18px;
-  padding: 0 5px;
+  min-height: 16px;
+  padding: 0 4px;
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 999px;
   color: var(--dsw-alias-label-tertiary);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  line-height: 16px;
+  line-height: 14px;
   white-space: nowrap;
 }
 

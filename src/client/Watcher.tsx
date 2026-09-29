@@ -862,6 +862,7 @@ function PhaseOverview({
   isNow,
   running,
   now,
+  turnTotalMs,
   selectedGroup,
   selectedItemId,
   observationMode,
@@ -876,6 +877,7 @@ function PhaseOverview({
   isNow: boolean
   running: boolean
   now: number
+  turnTotalMs: number | null
   selectedGroup: boolean
   selectedItemId: string | null
   observationMode: ObservationMode
@@ -887,12 +889,16 @@ function PhaseOverview({
   onSelectItem: (item: WorkItem) => void
 }) {
   const phaseState = overviewStateOf(group.status, isNow)
-  const phaseDuration = formatDuration(groupElapsedMs(group, isNow && running, now))
+  const phaseElapsedMs = groupElapsedMs(group, isNow && running, now)
+  const phaseDuration = formatDuration(phaseElapsedMs)
   const phaseSummary = [
-    `${group.steps.length} 个步骤`,
-    `${group.executionCount} 次执行`,
+    `${group.steps.length} 步`,
+    `${group.executionCount} 次`,
     phaseDuration,
   ].filter((part): part is string => part !== null).join(' · ')
+  const durationFraction = phaseElapsedMs !== null && turnTotalMs !== null && turnTotalMs > 0
+    ? Math.min(1, phaseElapsedMs / turnTotalMs)
+    : null
   const latestItemId = group.items.at(-1)?.id ?? null
   const clusters = useMemo(() => clusterWorkItems(group.items.filter(item => item.source !== 'model')), [group])
   const modelSteps = useMemo(
@@ -922,6 +928,14 @@ function PhaseOverview({
       aria-label={`${group.title}，${phaseSummary}，${OVERVIEW_STATE_LABEL[phaseState]}`}
     >
       <header className={css.phaseHeader}>
+        {durationFraction === null ? null : (
+          <span
+            className={css.phaseDurBar}
+            data-state={phaseState}
+            style={{ width: `${Math.max(6, Math.round(durationFraction * 100))}%` }}
+            aria-hidden="true"
+          />
+        )}
         <button
           type="button"
           className={css.phaseToggle}
@@ -932,16 +946,14 @@ function PhaseOverview({
         >
           <span className={css.phaseMarker} data-state={phaseState} aria-hidden="true" />
           <IconChevronRightOutlineRegular size={12} className={css.phaseChevron} />
-          <span className={css.phaseCopy}>
-            <span className={css.phaseTitleLine}>
-              <span className={css.phaseTitle} data-watcher-group-title="">{group.title}</span>
-              {groupBadges(group)}
-              {showOverviewTag(phaseState)
-                ? <span className={css.overviewTag} data-state={phaseState}>{OVERVIEW_STATE_LABEL[phaseState]}</span>
-                : null}
-            </span>
-            <span className={css.phaseMeta}>{phaseSummary}</span>
+          <span className={css.phaseTitleLine}>
+            <span className={css.phaseTitle} data-watcher-group-title="">{group.title}</span>
+            {groupBadges(group)}
+            {showOverviewTag(phaseState)
+              ? <span className={css.overviewTag} data-state={phaseState}>{OVERVIEW_STATE_LABEL[phaseState]}</span>
+              : null}
           </span>
+          <span className={css.phaseMeta}>{phaseSummary}</span>
         </button>
       </header>
 
@@ -1872,18 +1884,24 @@ function ReadyWatcher({
                             <div id={`watcher-turn-body-${turn.turn}`} className={css.turnBody} hidden={!turnOpen}>
                               <div className={css.groupRail}>
                                 <span className={css.railLine} aria-hidden="true" />
-                                {turn.groups.map(group => {
-                                  const isNow = group.id === lastGroupId
-                                  const selectedGroup = ui.selectedId === group.id
-                                  const phaseOpen = layerDisclosureOpen(disclosure, 'phase', group.id)
-                                  return (
-                                    <PhaseOverview
-                                      key={group.id}
-                                      group={group}
-                                      isNow={isNow}
-                                      running={picture.running}
-                                      now={now}
-                                      selectedGroup={selectedGroup}
+                                {(() => {
+                                  const turnTotalMs = turn.groups.reduce(
+                                    (sum, group) => sum + (groupElapsedMs(group, isLiveTurn, now) ?? 0),
+                                    0,
+                                  )
+                                  return turn.groups.map(group => {
+                                    const isNow = group.id === lastGroupId
+                                    const selectedGroup = ui.selectedId === group.id
+                                    const phaseOpen = layerDisclosureOpen(disclosure, 'phase', group.id)
+                                    return (
+                                      <PhaseOverview
+                                        key={group.id}
+                                        group={group}
+                                        isNow={isNow}
+                                        running={picture.running}
+                                        now={now}
+                                        turnTotalMs={turnTotalMs}
+                                        selectedGroup={selectedGroup}
                                       selectedItemId={selectedItemId}
                                       observationMode={observationMode}
                                       open={phaseOpen}
@@ -1912,7 +1930,8 @@ function ReadyWatcher({
                                       onSelectItem={item => selectItem(group, item)}
                                     />
                                   )
-                                })}
+                                })
+                              })()}
                               </div>
                             </div>
                           </section>
