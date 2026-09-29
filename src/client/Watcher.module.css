@@ -91,24 +91,33 @@
   --watcher-motion-content-out: 120ms;
   --watcher-ease-out: cubic-bezier(.2, .8, .2, 1);
   --watcher-ease-glide: cubic-bezier(.22, .61, .36, 1);
-  /* Frosted-sheet surface vocabulary: the sheet is mostly opaque so text
-   * contrast is untouched, and inner surfaces reference these two vars so the
+  /* Solid-instrument surface vocabulary: the panel is a fully opaque body.
+   * Hierarchy comes from inset bands (--watcher-layer) and 1px scribe lines
+   * instead of translucency, so text contrast is absolute and no backdrop
+   * blur is ever sampled. Inner surfaces reference these two vars so the
    * settings page (outside the panel) keeps its solid defaults. */
-  --watcher-surface: color-mix(in srgb, var(--dsw-specific-menu) 88%, transparent);
-  --watcher-layer: color-mix(in srgb, var(--dsw-alias-bg-layer-2) 62%, transparent);
+  --watcher-surface: var(--dsw-specific-menu);
+  --watcher-layer: var(--dsw-alias-bg-layer-2);
   box-sizing: border-box;
   display: flex;
   align-items: stretch;
   max-width: calc(100vw - 24px);
   max-height: var(--watcher-panel-max-height);
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--dsw-alias-border-l2) 72%, transparent);
+  border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 12px;
+  /* The host's specific-menu token is itself translucent (frosted menus).
+   * Strip its alpha via relative color so the panel body is truly opaque;
+   * the plain fallback keeps old engines working (translucent, no blur). */
   background: var(--dsw-specific-menu);
-  background: color-mix(in srgb, var(--dsw-specific-menu) 86%, transparent);
-  -webkit-backdrop-filter: blur(28px) saturate(1.35);
-  backdrop-filter: blur(28px) saturate(1.35);
-  box-shadow: var(--dsw-shadow-lv3);
+  background: rgb(from var(--dsw-specific-menu, #fff) r g b / 1);
+  /* Edge bevel highlight (theme-adaptive via label color) + contact shadow +
+   * main shadow + ambient shadow lift the solid body off the page. */
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--dsw-alias-label-primary) 4.5%, transparent),
+    0 2px 6px rgba(10, 13, 20, 0.16),
+    0 14px 40px -10px rgba(10, 13, 20, 0.32),
+    var(--dsw-shadow-lv3, none);
   color: var(--dsw-alias-label-primary);
   font-family: var(--dsw-font-family);
   font-size: 13px;
@@ -116,18 +125,6 @@
   transform-origin: top right;
   animation: watcher-panel-enter var(--watcher-motion-panel) var(--watcher-ease-out);
   isolation: isolate;
-}
-
-/* Users who ask the system to reduce translucency get the solid sheet back. */
-@media (prefers-reduced-transparency: reduce) {
-  .menu {
-    --watcher-surface: var(--dsw-specific-menu);
-    --watcher-layer: var(--dsw-alias-bg-layer-2);
-    border: 1px solid var(--dsw-alias-border-l2);
-    background: var(--dsw-specific-menu);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
 }
 
 /* 用户显式拖拽出的尺寸覆盖自动布局：内容区随面板一起伸缩。 */

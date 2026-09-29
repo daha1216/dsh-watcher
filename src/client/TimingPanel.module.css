@@ -10,7 +10,7 @@
   box-sizing: border-box;
   width: 100%;
   padding: 12px 14px;
-  background: var(--watcher-surface, var(--dsw-alias-bg-layer-1, #fff));
+  background: var(--watcher-surface, var(--dsw-specific-menu, #fff));
   border: 1px solid var(--dsw-alias-border-l2, #e2e4e9);
   border-radius: 8px;
   position: relative;
