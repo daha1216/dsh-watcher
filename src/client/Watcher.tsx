@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
 import type {} from '@deepseek-ai/dsh-session-stats/client'
@@ -734,7 +734,8 @@ function ModelStage({
         </span>
       </button>
 
-      <div id={bodyId} className={css.modelStageBody} hidden={!open}>
+      {open ? (
+      <div id={bodyId} className={css.modelStageBody}>
         {measuredSegments.length === 0
           ? null
           : (
@@ -792,19 +793,21 @@ function ModelStage({
                       </span>
                       <span className={css.reasoningMeta}>{meta}</span>
                     </button>
-                    <article
+                    {reasoningOpen ? (
+                      <article
                       id={`watcher-reasoning-${key}`}
                       className={css.reasoningBody}
-                      hidden={!reasoningOpen}
-                    >
+                      >
                       <MarkdownText text={attempt.reasoningText} labels={MARKDOWN_LABELS} />
-                    </article>
+                      </article>
+                    ) : null}
                   </section>
                 )
               })}
             </div>
           )}
       </div>
+      ) : null}
     </section>
   )
 }
@@ -857,11 +860,15 @@ function OverviewOccurrenceButton({
   )
 }
 
-function PhaseOverview({
+/* Memoized with a comparator that deliberately ignores `now` and the toggle
+ * callbacks: phases own their live clock internally (only the running phase
+ * subscribes to the 1Hz tick), and the callbacks are semantically constant.
+ * This keeps an idle panel's per-second reconciliation from walking every
+ * historical phase subtree. */
+const PhaseOverview = memo(function PhaseOverview({
   group,
   isNow,
   running,
-  now,
   turnTotalMs,
   selectedGroup,
   selectedItemId,
@@ -876,7 +883,6 @@ function PhaseOverview({
   group: WorkGroup
   isNow: boolean
   running: boolean
-  now: number
   turnTotalMs: number | null
   selectedGroup: boolean
   selectedItemId: string | null
@@ -888,6 +894,9 @@ function PhaseOverview({
   onToggleReasoning: (key: string, modelKey: string) => void
   onSelectItem: (item: WorkItem) => void
 }) {
+  // Only the phase that is executing now subscribes to the 1Hz clock;
+  // historical phases render on data changes alone.
+  const now = useLiveClock(isNow && running)
   const phaseState = overviewStateOf(group.status, isNow)
   const phaseElapsedMs = groupElapsedMs(group, isNow && running, now)
   const phaseDuration = formatDuration(phaseElapsedMs)
@@ -957,7 +966,8 @@ function PhaseOverview({
         </button>
       </header>
 
-      <div id={`watcher-phase-body-${group.id}`} hidden={!open}>
+      {open ? (
+      <div id={`watcher-phase-body-${group.id}`}>
         {observationMode === 'itemized'
           ? (
             <div className={css.stepTimeline} data-observation-mode="itemized">
@@ -996,7 +1006,8 @@ function PhaseOverview({
                         </span>
                       </button>
                     </header>
-                    <div id={`watcher-step-body-${step.id}`} className={css.overviewOccurrences} hidden={!stepOpen}>
+                    {stepOpen ? (
+                    <div id={`watcher-step-body-${step.id}`} className={css.overviewOccurrences}>
                       {timelineEntries.map(entry => {
                         if (entry.kind === 'model') {
                           return (
@@ -1029,6 +1040,7 @@ function PhaseOverview({
                         )
                       })}
                     </div>
+                    ) : null}
                   </section>
                 )
               })}
@@ -1053,10 +1065,10 @@ function PhaseOverview({
                         <small>{modelSteps.length} 个 Step · 按 Step 保留，不合并推理</small>
                       </span>
                     </button>
+                    {groupedModelsOpen ? (
                     <div
                       id={`watcher-grouped-models-${group.id}`}
                       className={css.groupedModelList}
-                      hidden={!groupedModelsOpen}
                     >
                       {modelSteps.map(step => {
                         const modelOpen = layerDisclosureOpen(disclosure, 'model', step.id)
@@ -1076,6 +1088,7 @@ function PhaseOverview({
                         )
                       })}
                     </div>
+                    ) : null}
                   </section>
                 )}
               {clusters.map(cluster => {
@@ -1129,10 +1142,10 @@ function PhaseOverview({
                         ? <span className={css.analysisClusterCount}>×{cluster.executionCount}</span>
                         : null}
                     </button>
+                    {clusterOpen ? (
                     <div
                       id={`watcher-cluster-body-${cluster.id}`}
                       className={css.analysisClusterItems}
-                      hidden={!clusterOpen}
                     >
                       {cluster.items.map(item => {
                         const sourceStep = sourceSteps.get(item.id)
@@ -1152,15 +1165,27 @@ function PhaseOverview({
                         )
                       })}
                     </div>
+                    ) : null}
                   </section>
                 )
               })}
             </div>
           )}
       </div>
+      ) : null}
     </section>
   )
-}
+}, (prev, next) =>
+  prev.group === next.group
+  && prev.isNow === next.isNow
+  && prev.running === next.running
+  && prev.turnTotalMs === next.turnTotalMs
+  && prev.selectedGroup === next.selectedGroup
+  && prev.selectedItemId === next.selectedItemId
+  && prev.observationMode === next.observationMode
+  && prev.open === next.open
+  && prev.disclosure === next.disclosure
+)
 
 /** Native session-header utility: exact work picture, typed evidence, no steering. */
 export function Watcher(props: WatcherProps) {
@@ -1881,7 +1906,8 @@ function ReadyWatcher({
                                 </button>
                               </h2>
                             </header>
-                            <div id={`watcher-turn-body-${turn.turn}`} className={css.turnBody} hidden={!turnOpen}>
+                            {turnOpen ? (
+                            <div id={`watcher-turn-body-${turn.turn}`} className={css.turnBody}>
                               <div className={css.groupRail}>
                                 <span className={css.railLine} aria-hidden="true" />
                                 {(() => {
@@ -1899,7 +1925,6 @@ function ReadyWatcher({
                                         group={group}
                                         isNow={isNow}
                                         running={picture.running}
-                                        now={now}
                                         turnTotalMs={turnTotalMs}
                                         selectedGroup={selectedGroup}
                                       selectedItemId={selectedItemId}
@@ -1934,6 +1959,7 @@ function ReadyWatcher({
                               })()}
                               </div>
                             </div>
+                            ) : null}
                           </section>
                         )
                       })}

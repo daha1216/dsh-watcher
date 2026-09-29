@@ -222,6 +222,7 @@
 }
 
 .commandDot {
+  position: relative;
   flex: none;
   width: 8px;
   height: 8px;
@@ -229,16 +230,22 @@
   background: var(--dsw-alias-label-tertiary);
 }
 
-.commandDot[data-state='running'] {
-  background: var(--dsw-static-deepseek-450);
+.commandDot[data-state='running'] { background: var(--dsw-static-deepseek-450); }
+
+.commandDot[data-state='running']::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--dsw-static-deepseek-450) 45%, transparent);
   animation: watcher-command-pulse 2.2s ease-in-out infinite;
 }
 
 .commandDot[data-state='alert'] { background: var(--dsw-alias-state-error-primary); }
 
 @keyframes watcher-command-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--dsw-static-deepseek-450) 45%, transparent); }
-  55% { box-shadow: 0 0 0 5px transparent; }
+  0%, 100% { opacity: 0.9; transform: scale(0.6); }
+  55% { opacity: 0; transform: scale(1); }
 }
 
 .commandStatus {
@@ -524,6 +531,13 @@
 
 .turns { padding: 8px 10px 18px; }
 
+.turn {
+  /* Off-screen turns skip layout and paint entirely; the intrinsic estimate
+   * matches the collapsed row height so scrollbar and follow stay honest. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 52px;
+}
+
 .turn + .turn {
   margin-top: 12px;
   padding-top: 12px;
@@ -642,7 +656,6 @@
   line-height: 18px;
 }
 
-.turnBody[hidden] { display: none; }
 
 .groupRail {
   position: relative;

@@ -11,7 +11,7 @@ test('Watcher waits for chat projection, then mounts its ready child', () => {
   } }).outputText
   const exports = {}
   const jsx = (type, props) => ({ type, props })
-  const react = { useMemo: fn => fn(), useRef: () => ({ current: null }), useState: value => [value, () => {}] }
+  const react = { memo: fn => fn, useMemo: fn => fn(), useRef: () => ({ current: null }), useState: value => [value, () => {}], useEffect: () => {}, useLayoutEffect: () => {} }
   vm.runInNewContext(code, { exports, require: name => {
     if (name === 'react') return react
     if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx }
