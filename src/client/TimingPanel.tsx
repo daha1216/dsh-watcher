@@ -253,7 +253,7 @@ export function TimingPanel({
                       <span className={css.popRight}>{Math.round(stats.reasoning / (thinkMs / 1000))} Token/秒</span>
                     </div>
                   ) : null}
-                  <div className={css.popRow} style={{ borderTop: '1px dashed rgba(255,255,255,0.15)', marginTop: '4px', paddingTop: '4px' }}>
+                  <div className={`${css.popRow} ${css.popRowDivide}`}>
                     <div className={css.popLeft}>
                       <span>思考耗时诊断</span>
                     </div>
@@ -280,7 +280,7 @@ export function TimingPanel({
                       {samples > 1 ? `累计 ${samples} 次 (均值 ${(ttftAvg / 1000).toFixed(2)}s)` : '单次握手'}
                     </span>
                   </div>
-                  <div className={css.popRow} style={{ borderTop: '1px dashed rgba(255,255,255,0.15)', marginTop: '4px', paddingTop: '4px' }}>
+                  <div className={`${css.popRow} ${css.popRowDivide}`}>
                     <div className={css.popLeft}>
                       <span>网络排队诊断</span>
                     </div>
@@ -321,7 +321,7 @@ export function TimingPanel({
                           : '—'}
                     </span>
                   </div>
-                  <div className={css.popRow} style={{ borderTop: '1px dashed rgba(255,255,255,0.15)', marginTop: '4px', paddingTop: '4px' }}>
+                  <div className={`${css.popRow} ${css.popRowDivide}`}>
                     <div className={css.popLeft}>
                       <span>生成算力分配</span>
                     </div>
@@ -356,7 +356,7 @@ export function TimingPanel({
                       {stats.tools} 次 ({stats.toolErrors > 0 ? `${stats.toolErrors} 次报错中断` : '零非零退出码'})
                     </span>
                   </div>
-                  <div className={css.popRow} style={{ borderTop: '1px dashed rgba(255,255,255,0.15)', marginTop: '4px', paddingTop: '4px' }}>
+                  <div className={`${css.popRow} ${css.popRowDivide}`}>
                     <div className={css.popLeft}>
                       <span>耗时瓶颈归因</span>
                     </div>
@@ -391,7 +391,7 @@ export function TimingPanel({
                       {Math.round(toolTotalMs / Math.max(1, stats.tools))} ms / 次
                     </span>
                   </div>
-                  <div className={css.popRow} style={{ borderTop: '1px dashed rgba(255,255,255,0.15)', marginTop: '4px', paddingTop: '4px' }}>
+                  <div className={`${css.popRow} ${css.popRowDivide}`}>
                     <div className={css.popLeft}>
                       <span>其它工具评价</span>
                     </div>

@@ -310,17 +310,39 @@ export function SessionInsights({ value, now, running, waiting, onEvidence, toke
   return (
     <section className={css.hudBox} aria-label="耗时分布与运行健康度" data-collapsed={collapsed ? '' : undefined}>
       <div className={css.hudTop}>
-        <div className={css.hudTopLeft}>
-          <span className={css.hudHeading}>
-            {scope === 'turn'
-              ? (turnMissing ? '全会话' : '本轮')
-              : selectedModel
-                ? `模型: ${routeLabel(selectedModel)}`
-                : '全会话'}
-          </span>
-          {turnMissing
-            ? <span className={css.hudHeadingNote} title="本轮尚未开始，以下为全会话累计数据">本轮未开始 · 已显示全会话</span>
-            : null}
+        <div className={css.hudHeadRow}>
+          <div className={css.hudTopLeft}>
+            <span className={css.hudHeading}>
+              {scope === 'turn'
+                ? (turnMissing ? '全会话' : '本轮')
+                : selectedModel
+                  ? `模型: ${routeLabel(selectedModel)}`
+                  : '全会话'}
+            </span>
+            {turnMissing
+              ? <span className={css.hudHeadingNote} title="本轮尚未开始，以下为全会话累计数据">本轮未开始 · 已显示全会话</span>
+              : null}
+          </div>
+          <div className={css.hudTopRight}>
+            <div className={css.scopeGroup} role="group" aria-label="统计范围切换">
+              <button type="button" className={css.scopeBtn} data-active={scope === 'turn' ? '' : undefined}
+                onClick={() => { setScope('turn'); setModelFilter('all') }}>本轮</button>
+              <button type="button" className={css.scopeBtn} data-active={scope === 'session' ? '' : undefined}
+                onClick={() => setScope('session')}>全会话</button>
+            </div>
+            <button
+              type="button"
+              className={css.collapseBtn}
+              aria-expanded={!collapsed}
+              aria-label={collapsed ? '展开耗时统计' : '收起耗时统计'}
+              title={collapsed ? '展开耗时统计' : '收起耗时统计'}
+              onClick={toggleCollapsed}
+            >
+              <span className={css.collapseChevron} aria-hidden="true">▾</span>
+            </button>
+          </div>
+        </div>
+        <div className={css.hudStatRow}>
           {scope === 'turn' && currentRoute?.model ? (
             <span className={css.currentModelTag} title={routeLabel(currentRoute)}>
               <strong className={css.modelTagText}>{routeLabel(currentRoute)}</strong>
@@ -332,30 +354,12 @@ export function SessionInsights({ value, now, running, waiting, onEvidence, toke
           <span className={css.contextTag}>
             {scope === 'turn' ? '上下文' : '累计输入'} <strong>{fmt(stats.input ?? 0)}</strong> Token
           </span>
-        </div>
-        <div className={css.hudTopRight}>
           <span className={css.tokenStat}>
-            <strong>{fmt(stats.tokens ?? 0)}</strong> Token ({cachePct}% 命中)
+            <strong>{fmt(stats.tokens ?? 0)}</strong> Token · {cachePct}% 命中
           </span>
           <span className={css.costStat} title={costTitle} aria-label={`${copy.estimatedCost}: ${costText}`}>
             {copy.estimatedCost} <strong>{costText}</strong>
           </span>
-          <div className={css.scopeGroup} role="group" aria-label="统计范围切换">
-            <button type="button" className={css.scopeBtn} data-active={scope === 'turn' ? '' : undefined}
-              onClick={() => { setScope('turn'); setModelFilter('all') }}>本轮</button>
-            <button type="button" className={css.scopeBtn} data-active={scope === 'session' ? '' : undefined}
-              onClick={() => setScope('session')}>全会话</button>
-          </div>
-          <button
-            type="button"
-            className={css.collapseBtn}
-            aria-expanded={!collapsed}
-            aria-label={collapsed ? '展开耗时统计' : '收起耗时统计'}
-            title={collapsed ? '展开耗时统计' : '收起耗时统计'}
-            onClick={toggleCollapsed}
-          >
-            <span className={css.collapseChevron} aria-hidden="true">▾</span>
-          </button>
         </div>
       </div>
       {!collapsed && scope === 'session' && isMultiModel ? (
@@ -907,10 +911,10 @@ export function InsightsSettings(props: { remote?: any }) {
   const heroCostTitle = [estimateDisclaimer(locale), heroCostNote].filter(Boolean).join(' · ')
 
   return (
-    <div className={css.settingsContainer}>
+    <div className={css.settingsContainer} data-wi-ui="v2">
       <div className={css.cockpitHeader}>
         <div className={css.cockpitTitleArea}>
-          <h2 className={css.cockpitMainTitle}>对话开销与模型风云榜</h2>
+          <h2 className={css.cockpitMainTitle}>用量统计与模型洞察</h2>
           <p className={css.cockpitSubTitle}>只读汇总本地已缓存的对话。按活动日期归组，无额外后台开销。</p>
         </div>
         <div className={css.headerRightControls}>
@@ -947,109 +951,109 @@ export function InsightsSettings(props: { remote?: any }) {
       </div>
 
       <div className={css.heroStatsRow}>
-        <div className={css.heroPair}>
-          <div className={css.heroMetric}>
-            <span className={css.heroCaption}>Token</span>
-            <strong className={css.heroValue}>{analytics ? fmtCompact(analytics.totalTokens) : '-'}</strong>
-          </div>
-          <div
-            className={css.heroMetric}
-            title={heroCostTitle}
-            aria-label={`${copy.estimatedCost}: ${heroCostText}`}
-          >
-            <span className={css.heroCaption}>{copy.estimatedCost}</span>
-            <strong className={css.heroValue}>{heroCostText}</strong>
-            {heroCostNote ? <span className={css.heroFootnote}>{heroCostNote}</span> : null}
-          </div>
+        <div className={css.heroMetric}>
+          <span className={css.heroCaption}>Token 总消耗</span>
+          <strong className={css.heroValue}>{analytics ? fmtCompact(analytics.totalTokens) : '-'}</strong>
         </div>
-        <div className={css.heroMetaCol}>
-          <span>累计耗时 <strong>{analytics ? `${analytics.totalTimeHours} 小时` : '-'}</strong></span>
-          <span>缓存命中 <strong>{analytics ? `${analytics.cacheHitPct}% (${cacheNote})` : '-'}</strong></span>
-          <span>
-            有统计的对话 <strong>{analytics ? `${analytics.validCount} / ${analytics.scannedCount}` : '-'}</strong>
-            {analytics && analytics.scannedCount < analytics.listed
-              ? (
-                <span
-                  className={css.heroFootnote}
-                  title={`会话较多（共 ${analytics.listed} 个），仅统计最近 ${analytics.scannedCount} 个`}
-                >
-                  （仅统计最近 {analytics.scannedCount} / 共 {analytics.listed}）
-                </span>
-              )
-              : null}
-          </span>
+        <div
+          className={css.heroMetric}
+          title={heroCostTitle}
+          aria-label={`${copy.estimatedCost}: ${heroCostText}`}
+        >
+          <span className={css.heroCaption}>{copy.estimatedCost}</span>
+          <strong className={css.heroValue}>{heroCostText}</strong>
+          {heroCostNote ? <span className={css.heroFootnote}>{heroCostNote}</span> : null}
+        </div>
+        <div className={css.heroMetric}>
+          <span className={css.heroCaption}>累计耗时</span>
+          <strong className={css.heroValue}>{analytics ? `${analytics.totalTimeHours} 小时` : '-'}</strong>
+        </div>
+        <div className={css.heroMetric}>
+          <span className={css.heroCaption}>缓存命中</span>
+          <strong className={css.heroValue}>{analytics ? `${analytics.cacheHitPct}%` : '-'}</strong>
+          <span className={css.heroFootnote}>{analytics ? `${cacheNote} · 复用 ${fmtCompact(analytics.totalCacheRead)} Token` : ''}</span>
         </div>
       </div>
+      <p className={css.heroScanNote}>
+        有统计的对话 <strong>{analytics ? `${analytics.validCount} / ${analytics.scannedCount}` : '-'}</strong>
+        {analytics && analytics.scannedCount < analytics.listed
+          ? `（会话较多，仅统计最近 ${analytics.scannedCount} / 共 ${analytics.listed} 个）`
+          : ''}
+      </p>
 
       {/* 六大极客风云与问题洞察榜单：两列规整自适应排版，右下角动作条绝对平齐 */}
       <div className={css.roastGrid}>
         {/* 卡片 1: 极致打字机 */}
         <div
           className={`${css.roastItem} ${activeDrilldown === 'speed' ? css.roastItemActive : ''}`}
+          data-tone="ok"
           onClick={() => setActiveDrilldown(activeDrilldown === 'speed' ? null : 'speed')}
         >
           <div className={css.roastHead}>
-            <span className={css.roastTag} style={{ color: '#10b981' }}>极致打字机</span>
+            <span className={css.roastTag}>极致打字机</span>
             <span className={css.roastCategoryBadge}>速度王者</span>
           </div>
           <div className={css.roastTitle} title={analytics?.fastKing?.model}>{analytics?.fastKing?.model ?? '暂无数据'}</div>
-          <div className={css.roastDesc} title="首字响应最迅速，轻量改错利器">首字响应最迅速，轻量改错利器</div>
-          <div className={css.roastVal} style={{ color: '#10b981' }}>
+          <div className={css.roastVal}>
             {analytics?.fastKing?.firstSamples ? `首字均值 ${(analytics.fastKing.firstMs / analytics.fastKing.firstSamples / 1000).toFixed(2)} 秒` : '暂无数据'}
           </div>
+          <div className={css.roastDesc} title="首字响应最迅速，轻量改错利器">首字响应最迅速，轻量改错利器</div>
           <div className={css.roastFooter}>
             <span className={css.roastFooterLeft}>首响应耗时</span>
-            <span className={css.roastAction}>{activeDrilldown === 'speed' ? '收起透视 ▴' : '透视详情 ›'}</span>
+            <span className={css.roastAction}>{activeDrilldown === 'speed' ? '收起明细' : '展开明细'}</span>
           </div>
         </div>
 
         {/* 卡片 2: 最慢树懒 */}
         <div
           className={`${css.roastItem} ${activeDrilldown === 'latency' ? css.roastItemActive : ''}`}
+          data-tone="warn"
           onClick={() => setActiveDrilldown(activeDrilldown === 'latency' ? null : 'latency')}
         >
           <div className={css.roastHead}>
-            <span className={css.roastTag} style={{ color: '#d97706' }}>最慢树懒</span>
+            <span className={css.roastTag}>最慢树懒</span>
             <span className={css.roastCategoryBadge}>延迟瓶颈</span>
           </div>
           <div className={css.roastTitle} title={analytics?.slowKing?.model}>{analytics?.slowKing?.model ?? '暂无数据'}</div>
-          <div className={css.roastDesc} title="首字排队最久，点根烟等它开工">首字排队最久，点根烟等它开工</div>
-          <div className={css.roastVal} style={{ color: '#d97706' }}>
+          <div className={css.roastVal}>
             {analytics?.slowKing?.firstSamples ? `首字均值 ${(analytics.slowKing.firstMs / analytics.slowKing.firstSamples / 1000).toFixed(2)} 秒` : '暂无数据'}
           </div>
+          <div className={css.roastDesc} title="首字排队最久，等待开工的时间最长">首字排队最久，等待开工的时间最长</div>
           <div className={css.roastFooter}>
             <span className={css.roastFooterLeft}>排队瓶颈</span>
-            <span className={css.roastAction}>{activeDrilldown === 'latency' ? '收起透视 ▴' : '透视详情 ›'}</span>
+            <span className={css.roastAction}>{activeDrilldown === 'latency' ? '收起明细' : '展开明细'}</span>
           </div>
         </div>
 
         {/* 卡片 3: 深度沉思狂 */}
         <div
           className={`${css.roastItem} ${activeDrilldown === 'thinking' ? css.roastItemActive : ''}`}
+          data-tone="think"
           onClick={() => setActiveDrilldown(activeDrilldown === 'thinking' ? null : 'thinking')}
         >
           <div className={css.roastHead}>
-            <span className={css.roastTag} style={{ color: '#8b5cf6' }}>深度沉思狂</span>
+            <span className={css.roastTag}>深度沉思狂</span>
             <span className={css.roastCategoryBadge}>推理硬核</span>
           </div>
           <div className={css.roastTitle} title={analytics?.thinkKing?.model}>{analytics?.thinkKing?.model ?? '暂无思考记录'}</div>
-          <div className={css.roastDesc} title="思考 Token 占自身输出比例最高">思考 Token 占自身输出比例最高</div>
-          <div className={css.roastVal} style={{ color: '#8b5cf6' }}>
+          <div className={css.roastVal}>
             {analytics?.thinkKing ? `思考占比 ${Math.round(((analytics.thinkKing.reasoning ?? 0) / (((analytics.thinkKing.reasoning ?? 0) + (analytics.thinkKing.output ?? 0)) || 1)) * 100)}%` : '无推理记录'}
           </div>
+          <div className={css.roastDesc} title="思考 Token 占自身输出比例最高">思考 Token 占自身输出比例最高</div>
           <div className={css.roastFooter}>
             <span className={css.roastFooterLeft}>推导占比</span>
-            <span className={css.roastAction}>{activeDrilldown === 'thinking' ? '收起透视 ▴' : '透视详情 ›'}</span>
+            <span className={css.roastAction}>{activeDrilldown === 'thinking' ? '收起明细' : '展开明细'}</span>
           </div>
         </div>
 
         {/* 卡片 4: 省流小能手 / 缓存待提升 */}
         <div
           className={`${css.roastItem} ${activeDrilldown === 'cache' ? css.roastItemActive : ''}`}
+          data-tone={(analytics?.cacheHitPct ?? 0) >= 40 ? 'ok' : 'warn'}
           onClick={() => setActiveDrilldown(activeDrilldown === 'cache' ? null : 'cache')}
         >
           <div className={css.roastHead}>
-            <span className={css.roastTag} style={{ color: (analytics?.cacheHitPct ?? 0) >= 40 ? '#10b981' : '#f59e0b' }}>
+            <span className={css.roastTag}>
               {(analytics?.cacheHitPct ?? 0) >= 40 ? '省流小能手' : '缓存待提升'}
             </span>
             <span className={css.roastCategoryBadge}>成本控制</span>
@@ -1057,25 +1061,26 @@ export function InsightsSettings(props: { remote?: any }) {
           <div className={css.roastTitle} title={analytics?.bestCacheModel?.model}>
             {(analytics?.cacheHitPct ?? 0) >= 40 ? (analytics?.bestCacheModel?.model ?? '上下文复用') : '上下文重传较多'}
           </div>
+          <div className={css.roastVal}>
+            {analytics ? `命中 ${analytics.cacheHitPct}% (${fmtCompact(analytics.totalCacheRead)} Token)` : '-'}
+          </div>
           <div className={css.roastDesc} title={(analytics?.cacheHitPct ?? 0) >= 40 ? '前缀缓存命中率高，大幅节约 Token' : '较多长文本全量重传，可利用前缀缓存'}>
             {(analytics?.cacheHitPct ?? 0) >= 40 ? '前缀缓存命中率高，大幅节约 Token' : '较多长文本全量重传，可利用前缀缓存'}
           </div>
-          <div className={css.roastVal} style={{ color: (analytics?.cacheHitPct ?? 0) >= 40 ? '#10b981' : '#f59e0b' }}>
-            {analytics ? `命中 ${analytics.cacheHitPct}% (${fmtCompact(analytics.totalCacheRead)} Token)` : '-'}
-          </div>
           <div className={css.roastFooter}>
             <span className={css.roastFooterLeft}>缓存效率</span>
-            <span className={css.roastAction}>{activeDrilldown === 'cache' ? '收起透视 ▴' : '透视详情 ›'}</span>
+            <span className={css.roastAction}>{activeDrilldown === 'cache' ? '收起明细' : '展开明细'}</span>
           </div>
         </div>
 
         {/* 卡片 5: 终端耗时狂 / 秒级放行 */}
         <div
           className={`${css.roastItem} ${activeDrilldown === 'tool' ? css.roastItemActive : ''}`}
+          data-tone={(analytics?.toolTimePct ?? 0) >= 30 ? 'warn' : 'info'}
           onClick={() => setActiveDrilldown(activeDrilldown === 'tool' ? null : 'tool')}
         >
           <div className={css.roastHead}>
-            <span className={css.roastTag} style={{ color: (analytics?.toolTimePct ?? 0) >= 30 ? '#f59e0b' : '#3b82f6' }}>
+            <span className={css.roastTag}>
               {(analytics?.toolTimePct ?? 0) >= 30 ? '终端耗时狂' : '秒级放行'}
             </span>
             <span className={css.roastCategoryBadge}>工程归因</span>
@@ -1083,25 +1088,26 @@ export function InsightsSettings(props: { remote?: any }) {
           <div className={css.roastTitle}>
             {(analytics?.toolTimePct ?? 0) >= 30 ? `本地命令占 ${analytics?.toolTimePct}% 耗时` : `本地损耗仅 ${analytics?.toolTimePct ?? 0}%`}
           </div>
+          <div className={css.roastVal}>
+            {analytics ? `工具耗时 ${Math.round(analytics.totalToolMs / 1000)} 秒 (${analytics.totalTools} 次)` : '-'}
+          </div>
           <div className={css.roastDesc} title={(analytics?.toolTimePct ?? 0) >= 30 ? '很多时候不是模型卡，是本地脚本跑太久' : '本地工具极速执行，等待时间主要在云端'}>
             {(analytics?.toolTimePct ?? 0) >= 30 ? '很多时候不是模型卡，是本地脚本跑太久' : '本地工具极速执行，等待时间主要在云端'}
           </div>
-          <div className={css.roastVal} style={{ color: (analytics?.toolTimePct ?? 0) >= 30 ? '#f59e0b' : '#3b82f6' }}>
-            {analytics ? `工具耗时 ${Math.round(analytics.totalToolMs / 1000)} 秒 (${analytics.totalTools} 次)` : '-'}
-          </div>
           <div className={css.roastFooter}>
             <span className={css.roastFooterLeft}>本地耗时</span>
-            <span className={css.roastAction}>{activeDrilldown === 'tool' ? '收起透视 ▴' : '透视详情 ›'}</span>
+            <span className={css.roastAction}>{activeDrilldown === 'tool' ? '收起明细' : '展开明细'}</span>
           </div>
         </div>
 
         {/* 卡片 6: 运行可靠度 */}
         <div
           className={`${css.roastItem} ${activeDrilldown === 'reliability' ? css.roastItemActive : ''}`}
+          data-tone={(analytics?.totalErrors ?? 0) > 0 ? 'err' : 'ok'}
           onClick={() => setActiveDrilldown(activeDrilldown === 'reliability' ? null : 'reliability')}
         >
           <div className={css.roastHead}>
-            <span className={css.roastTag} style={{ color: (analytics?.totalErrors ?? 0) > 0 ? '#ef4444' : '#10b981' }}>
+            <span className={css.roastTag}>
               {(analytics?.totalErrors ?? 0) > 0 ? '翻车排查' : '运行可靠度'}
             </span>
             <span className={css.roastCategoryBadge}>稳定性</span>
@@ -1109,15 +1115,15 @@ export function InsightsSettings(props: { remote?: any }) {
           <div className={css.roastTitle} title={(analytics?.totalErrors ?? 0) > 0 ? '存在工具报错' : '执行顺畅'}>
             {(analytics?.totalErrors ?? 0) > 0 ? `${analytics?.totalErrors} 次工具报错` : '100% 顺畅'}
           </div>
+          <div className={css.roastVal}>
+            {(analytics?.totalErrors ?? 0) > 0 ? `${analytics?.totalErrors} 次报错 · ${analytics?.totalRetries} 次重试` : '0 报错 · 0 重试'}
+          </div>
           <div className={css.roastDesc} title={(analytics?.totalErrors ?? 0) > 0 ? '命令执行或参数错误，注意环境排查' : '未发生命令报错或异常，执行稳健'}>
             {(analytics?.totalErrors ?? 0) > 0 ? '命令执行或参数错误，注意环境排查' : '未发生命令报错或异常，执行稳健'}
           </div>
-          <div className={css.roastVal} style={{ color: (analytics?.totalErrors ?? 0) > 0 ? '#ef4444' : '#10b981' }}>
-            {(analytics?.totalErrors ?? 0) > 0 ? `${analytics?.totalErrors} 次报错 · ${analytics?.totalRetries} 次重试` : '0 报错 · 0 重试'}
-          </div>
           <div className={css.roastFooter}>
             <span className={css.roastFooterLeft}>异常检测</span>
-            <span className={css.roastAction}>{activeDrilldown === 'reliability' ? '收起透视 ▴' : '透视详情 ›'}</span>
+            <span className={css.roastAction}>{activeDrilldown === 'reliability' ? '收起明细' : '展开明细'}</span>
           </div>
         </div>
       </div>
@@ -1128,12 +1134,12 @@ export function InsightsSettings(props: { remote?: any }) {
           <div className={css.drilldownHead}>
             <div className={css.drilldownTitleGroup}>
               <span className={css.drilldownTitle}>
-                {activeDrilldown === 'speed' && '⚡ 模型首字响应延迟对比 (TTFT)'}
-                {activeDrilldown === 'latency' && '🐢 模型首字排队耗时排行榜'}
-                {activeDrilldown === 'thinking' && '🧠 深度推导算力分配明细'}
-                {activeDrilldown === 'cache' && '💰 前缀缓存命中率排行榜'}
-                {activeDrilldown === 'tool' && '⏱️ 本地工具与终端命令耗时全景拆解'}
-                {activeDrilldown === 'reliability' && '🛡️ 运行可靠度与报错排查'}
+                {activeDrilldown === 'speed' && '模型首字响应延迟对比（TTFT）'}
+                {activeDrilldown === 'latency' && '模型首字排队耗时排行'}
+                {activeDrilldown === 'thinking' && '深度推导算力分配明细'}
+                {activeDrilldown === 'cache' && '前缀缓存命中率排行'}
+                {activeDrilldown === 'tool' && '本地工具与终端耗时拆解'}
+                {activeDrilldown === 'reliability' && '运行可靠度与报错排查'}
               </span>
               <span className={css.drilldownSub}>
                 {activeDrilldown === 'speed' && '按首响应延迟升序排列（最快在上，首字响应最迅速）'}
@@ -1149,7 +1155,7 @@ export function InsightsSettings(props: { remote?: any }) {
               className={css.drilldownCloseBtn}
               onClick={() => setActiveDrilldown(null)}
             >
-              收起 ✕
+              收起
             </button>
           </div>
 
@@ -1242,8 +1248,8 @@ export function InsightsSettings(props: { remote?: any }) {
                       </span>
                     </div>
                     <div className={css.toolCompoundTrack} style={{ height: '8px' }}>
-                      <div style={{ width: `${thinkPct}%`, background: '#8b5cf6', height: '100%' }} title={`思考: ${thinkPct}%`} />
-                      <div style={{ width: `${100 - thinkPct}%`, background: '#38bdf8', height: '100%' }} title={`正文: ${100 - thinkPct}%`} />
+                      <div className={css.barSegThink} style={{ width: `${thinkPct}%` }} title={`思考: ${thinkPct}%`} />
+                      <div className={css.barSegBody} style={{ width: `${100 - thinkPct}%` }} title={`正文: ${100 - thinkPct}%`} />
                     </div>
                     <div className={css.rankSubText}>
                       <span>思考推导 <strong>{fmtCompact(m.reasoning)}</strong> Token ({thinkPct}%)</span>
@@ -1276,8 +1282,8 @@ export function InsightsSettings(props: { remote?: any }) {
                       </span>
                     </div>
                     <div className={css.toolCompoundTrack} style={{ height: '8px' }}>
-                      <div style={{ width: `${hitPct}%`, background: '#10b981', height: '100%' }} title={`缓存命中: ${hitPct}%`} />
-                      <div style={{ width: `${100 - hitPct}%`, background: 'var(--dsw-alias-border-l3, #94a3b8)', height: '100%' }} title={`未命中: ${100 - hitPct}%`} />
+                      <div className={css.barSegHit} style={{ width: `${hitPct}%` }} title={`缓存命中: ${hitPct}%`} />
+                      <div className={css.barSegMiss} style={{ width: `${100 - hitPct}%` }} title={`未命中: ${100 - hitPct}%`} />
                     </div>
                     <div className={css.rankSubText}>
                       <span>命中复用 <strong>{fmtCompact(m.cacheRead ?? 0)}</strong> Token ({hitPct}%)</span>
@@ -1303,7 +1309,7 @@ export function InsightsSettings(props: { remote?: any }) {
                 </div>
                 <div className={css.toolCompoundLegend}>
                   <span><i className={css.dlDot} style={{ background: 'var(--dsw-static-green-500, #10b981)' }} /> 终端命令 (Bash): <strong>{Math.round(analytics.totalBashMs / 1000)}秒 ({analytics.bashPct}%)</strong></span>
-                  <span><i className={css.dlDot} style={{ background: '#0ea5e9' }} /> 文件与通用读写: <strong>{Math.round(analytics.totalFileMs / 1000)}秒 ({analytics.filePct}%)</strong></span>
+                  <span><i className={css.dlDot} style={{ background: 'var(--dsw-static-blue-500, #0ea5e9)' }} /> 文件与通用读写: <strong>{Math.round(analytics.totalFileMs / 1000)}秒 ({analytics.filePct}%)</strong></span>
                 </div>
               </div>
 
@@ -1321,10 +1327,10 @@ export function InsightsSettings(props: { remote?: any }) {
                 </div>
 
                 <div className={css.toolMiniCard}>
-                  <div className={css.toolMiniTitle}>
-                    <i className={css.dlDot} style={{ background: '#0ea5e9' }} />
-                    <span>文件操作与其他工具 (读写/检索)</span>
-                  </div>
+                <div className={css.toolMiniTitle}>
+                  <i className={css.dlDot} style={{ background: 'var(--dsw-static-blue-500, #0ea5e9)' }} />
+                  <span>文件操作与其他工具 (读写/检索)</span>
+                </div>
                   <div className={css.toolMiniNum}>{Math.round(analytics.totalFileMs / 1000)} 秒</div>
                   <div className={css.toolMiniDesc}>
                     包含 read, write, edit, glob, grep 等轻量快速文件读写。单次耗时通常在毫秒级。
@@ -1354,8 +1360,8 @@ export function InsightsSettings(props: { remote?: any }) {
                           </span>
                         </div>
                         <div className={css.toolCompoundTrack} style={{ height: '8px' }}>
-                          <div style={{ width: `${bPct}%`, background: 'var(--dsw-static-green-500, #10b981)', height: '100%' }} title={`终端命令: ${Math.round(bMs/1000)}s`} />
-                          <div style={{ width: `${100 - bPct}%`, background: '#0ea5e9', height: '100%' }} title={`文件读写: ${Math.round(fMs/1000)}s`} />
+                          <div className={css.barSegBash} style={{ width: `${bPct}%` }} title={`终端命令: ${Math.round(bMs/1000)}s`} />
+                          <div className={css.barSegFile} style={{ width: `${100 - bPct}%` }} title={`文件读写: ${Math.round(fMs/1000)}s`} />
                         </div>
                         <div className={css.rankSubText}>
                           <span>终端 Bash <strong>{Math.round(bMs / 1000)}s</strong> ({bPct}%)</span>
@@ -1955,11 +1961,11 @@ export function InsightsSettings(props: { remote?: any }) {
             <span>只读汇总本地已缓存对话。方块深浅代表当天 Token 消耗强度（自适应四分位数分阶）。</span>
             <div className={css.heatmapLegend}>
               <span>少</span>
-              <div className={css.heatmapLegendCell} style={{ background: 'var(--dsw-alias-bg-layer-2, rgba(255, 255, 255, 0.04))', border: '1px solid var(--dsw-alias-border-l2, rgba(255, 255, 255, 0.08))' }} />
-              <div className={css.heatmapLegendCell} style={{ background: 'rgba(86, 134, 254, 0.22)', border: '1px solid rgba(86, 134, 254, 0.35)' }} />
-              <div className={css.heatmapLegendCell} style={{ background: 'rgba(86, 134, 254, 0.45)', border: '1px solid rgba(86, 134, 254, 0.60)' }} />
-              <div className={css.heatmapLegendCell} style={{ background: 'rgba(86, 134, 254, 0.72)', border: '1px solid rgba(86, 134, 254, 0.88)' }} />
-              <div className={css.heatmapLegendCell} style={{ background: 'var(--dsw-static-deepseek-450, #5686fe)', border: '1px solid #9bb8ff', boxShadow: '0 0 6px rgba(86, 134, 254, 0.45)' }} />
+              <div className={css.heatmapLegendCell} data-level="0" />
+              <div className={css.heatmapLegendCell} data-level="1" />
+              <div className={css.heatmapLegendCell} data-level="2" />
+              <div className={css.heatmapLegendCell} data-level="3" />
+              <div className={css.heatmapLegendCell} data-level="4" />
               <span>多</span>
             </div>
           </div>
@@ -2114,7 +2120,7 @@ export function InsightsSettings(props: { remote?: any }) {
       </details>
 
       <details className={css.settingsDrawer}>
-        <summary className={css.settingsSummary}>⚙ 高级报警阈值设置 (默认开箱即用，无需频繁调整)</summary>
+        <summary className={css.settingsSummary}>异常提醒阈值</summary>
         <div className={css.settingsDrawerContent}>
           <label className={css.settingInlineItem}>
             <span>等多久没字算卡顿:</span>
