@@ -178,7 +178,7 @@ test('each Step can disclose a truthful nested model stage and provider-visible 
   assert.doesNotMatch(source, /隐藏思维/)
 })
 
-test('collapsing the docked inspector animates its column instead of popping away', async () => {
+test('collapsing the overlay drawer animates instead of popping away', async () => {
   const [source, styles] = await Promise.all([
     readFile(clientSource, 'utf8'),
     readFile(clientStyles, 'utf8'),
@@ -191,27 +191,29 @@ test('collapsing the docked inspector animates its column instead of popping awa
   assert.match(source, /onClick=\{selected === undefined \? backToLatest : \(\) => closeInspector\(true\)\}/)
   // Closing must not silently re-arm follow; only the "查看最新" affordance does.
   assert.match(source, /clearSelection/)
-  // Animating the column changes the panel's clamped width; the frame must be
-  // frozen for the transition or the whole panel flicks on every observer tick.
   assert.match(source, /const pinPanelFrame = \(\) => \{/)
   assert.match(source, /setPanelPin\(\{ top, right \}\)/)
   assert.match(source, /: \{ top: panelPin\.top, right: panelPin\.right, left: 'auto' as const \}/)
-  assert.match(styles, /@keyframes watcher-inspector-enter \{\s*from \{ width: 0; \}\s*\}/)
-  assert.match(styles, /@keyframes watcher-inspector-exit \{\s*to \{ width: 0; \}\s*\}/)
-  assert.match(styles, /animation: watcher-inspector-exit var\(--watcher-motion-inspector\) var\(--watcher-ease-glide\) var\(--watcher-motion-content-out\)/)
-  assert.match(styles, /animation: watcher-inspector-content-out var\(--watcher-motion-content-out\) ease-in forwards/)
-  assert.match(styles, /@keyframes watcher-inspector-content-out \{\s*to \{ opacity: 0; transform: translateX\(16px\); \}\s*\}/)
+  // The overlay drawer never changes the panel width, so the slide is pure
+  // transform: nothing reflows, and the fixed-width children trick is gone.
+  assert.match(styles, /\.inspector \{[\s\S]*?position: absolute;/)
+  assert.match(styles, /@keyframes watcher-inspector-enter \{\s*from \{ opacity: 0; transform: translateX\(28px\); \}\s*\}/)
+  assert.match(styles, /@keyframes watcher-inspector-exit \{\s*to \{ opacity: 0; transform: translateX\(28px\); \}\s*\}/)
+  assert.match(styles, /animation: watcher-inspector-exit var\(--watcher-motion-inspector\) var\(--watcher-ease-glide\) forwards/)
+  assert.doesNotMatch(styles, /watcher-inspector-content-out/)
   const reduced = styles.slice(styles.indexOf('@media (prefers-reduced-motion: reduce)'))
   assert.match(reduced, /\.inspector\[data-closing\],\s*\n\s*\.inspector\[data-closing\] > \* \{ animation-duration: \.01ms; animation-delay: 0s; \}/)
 })
 
-test('the inspector header keeps its status line inside the docked column', async () => {
+test('the overlay drawer covers the work path without reflowing it', async () => {
   const styles = await readFile(clientStyles, 'utf8')
 
-  // Docked children carry the column's box width; without border-box their
-  // padding widened them past the column and the status tail slipped under the
-  // work-path card.
-  assert.match(styles, /\.inspector > \* \{\s*box-sizing: border-box;\s*width: 438px;/)
+  // The drawer is an opaque right-anchored overlay; it must never rely on
+  // fixed-width children (the old docked-column reflow trick).
+  assert.match(styles, /\.inspector \{[\s\S]*?width: min\(460px, 100%\);/)
+  assert.match(styles, /\.inspector \{[\s\S]*?border-left: 1px solid var\(--dsw-alias-border-l2\);/)
+  assert.match(styles, /rgb\(from var\(--dsw-specific-menu, #fff\) r g b \/ 1\)/)
+  assert.doesNotMatch(styles, /\.inspector > \* \{\s*box-sizing: border-box;\s*width: 438px;/)
   assert.match(styles, /\.statusLine,\s*\n\.detailStatus \{\s*display: flex;\s*\n\s*flex-wrap: wrap;/)
   assert.match(styles, /\.location \{\s*margin-left: auto;\s*\n\s*min-width: 0;/)
 })

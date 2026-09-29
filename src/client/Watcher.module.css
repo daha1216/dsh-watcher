@@ -190,74 +190,122 @@
   display: flex;
   flex: none;
   flex-direction: column;
-  width: min(720px, calc(100vw - 32px));
+  width: min(760px, calc(100vw - 32px));
   min-width: 0;
   min-height: 290px;
   max-height: var(--watcher-panel-max-height);
   background: transparent;
 }
 
-.pictureHeader {
+/* ── 指挥条：一行状态 + 一行下沉控制，取代旧的厚头部 ── */
+.commandBar {
   display: flex;
   flex: none;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 14px 14px 16px;
+  flex-direction: column;
   border-bottom: 1px solid var(--dsw-alias-border-l2);
 }
 
-.nowBlock { min-width: 0; }
-
-.eyebrow {
+.commandRow {
   display: flex;
   align-items: center;
-  gap: 5px;
-  overflow: hidden;
-  color: var(--dsw-static-deepseek-450);
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 14px;
+}
+
+.commandState {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.commandDot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dsw-alias-label-tertiary);
+}
+
+.commandDot[data-state='running'] {
+  background: var(--dsw-static-deepseek-450);
+  animation: watcher-command-pulse 2.2s ease-in-out infinite;
+}
+
+.commandDot[data-state='alert'] { background: var(--dsw-alias-state-error-primary); }
+
+@keyframes watcher-command-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--dsw-static-deepseek-450) 45%, transparent); }
+  55% { box-shadow: 0 0 0 5px transparent; }
+}
+
+.commandStatus {
+  flex: none;
+  color: var(--dsw-alias-label-secondary);
   font-size: 12px;
-  font-weight: 500;
-  line-height: 18px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.eyebrow[data-alert] { color: var(--dsw-alias-state-error-primary); }
-
-.now {
-  margin-top: 2px;
-  overflow: hidden;
-  color: var(--dsw-alias-label-primary);
-  font-size: 17px;
   font-weight: 600;
-  line-height: 24px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.commandStatus[data-alert] { color: var(--dsw-alias-state-error-primary); }
+
+.commandNow {
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.summary {
+/* 控制行：计数与视图分段压在下沉内衬上 */
+.controlRow {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 14px;
+  min-height: 36px;
+  padding: 4px 14px;
+  background: var(--dsw-alias-bg-layer-2);
+  border-top: 1px solid var(--dsw-alias-border-l2);
+}
+
+.controlCounts {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  margin-top: 4px;
+  min-width: 0;
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   line-height: 18px;
 }
 
-.summary span + span::before {
+.controlCounts span + span::before {
   content: '·';
-  margin: 0 6px;
+  margin: 0 7px;
   color: var(--dsw-alias-label-dimmed);
 }
 
-.summary [data-partial] { color: var(--dsw-alias-state-warn-primary); }
+.controlViews {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+}
 
 .loadAllInlineBtn {
   display: inline-flex;
   align-items: center;
-  margin-left: 6px;
+  margin-left: 8px;
   padding: 1px 7px;
   border-radius: 4px;
   border: 1px solid color-mix(in srgb, var(--dsw-static-deepseek-450, #4d6bfe) 40%, transparent);
@@ -316,19 +364,6 @@
   line-height: 19px;
 }
 
-.viewToolbar {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px 14px;
-  min-height: 42px;
-  padding: 6px 14px;
-  border-bottom: 1px solid var(--dsw-alias-border-l2);
-  background: transparent;
-  flex-wrap: wrap;
-}
-
 .viewControl {
   display: flex;
   min-width: 0;
@@ -338,7 +373,7 @@
 
 .viewToolbarLabel {
   color: var(--dsw-alias-label-tertiary);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 18px;
   white-space: nowrap;
 }
@@ -350,11 +385,11 @@
   padding: 2px;
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 7px;
-  background: var(--dsw-alias-bg-layer-2);
+  background: var(--dsw-alias-bg-layer-1);
 }
 
 .viewMode button {
-  min-height: 26px;
+  min-height: 24px;
   padding: 2px 9px;
   border: 0;
   border-radius: 5px;
@@ -503,9 +538,9 @@
 
 .turnToggle {
   display: grid;
-  grid-template-columns: 14px minmax(0, 1fr) auto;
+  grid-template-columns: 14px 44px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 7px;
+  gap: 10px;
   box-sizing: border-box;
   width: 100%;
   min-height: 50px;
@@ -529,6 +564,34 @@
 
 .turnToggle[aria-expanded='true'] .turnChevron { transform: rotate(90deg); }
 
+/* 章节编号块：轮次的视觉锚，右侧一道刻线分隔正文 */
+.turnNoWrap {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  padding: 2px 0;
+  border-right: 1px solid var(--dsw-alias-border-l2);
+}
+
+.turnNoLabel {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  line-height: 12px;
+}
+
+.turnNo {
+  margin-top: 1px;
+  color: var(--dsw-alias-label-primary);
+  font-size: 19px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 22px;
+}
+
 .turnCopy {
   display: flex;
   min-width: 0;
@@ -540,28 +603,25 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
+  min-height: 18px;
 }
 
-.turnTitle {
-  color: var(--dsw-alias-label-secondary);
+.turnSummary {
+  overflow: hidden;
+  color: var(--dsw-alias-label-primary);
   font-size: 13px;
-  font-weight: 600;
-  line-height: 20px;
+  font-weight: 500;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.turnSummary,
 .turnDuration {
   color: var(--dsw-alias-label-tertiary);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   font-weight: 400;
   line-height: 18px;
-}
-
-.turnSummary {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .turnPerformance {
@@ -1406,62 +1466,38 @@
   line-height: 18px;
 }
 
+/* 覆盖式右抽屉：浮于工作路径之上而不是把它挤窄——主列阅读位置在查看
+ * 详情前后保持不动，面板宽度恒定，fixed 定位不再随宽度变化而跳动。 */
 .inspector {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
   display: flex;
-  flex: none;
   flex-direction: column;
-  width: 438px;
+  width: min(460px, 100%);
   min-width: 0;
-  max-height: var(--watcher-panel-max-height);
-  border-right: 1px solid var(--dsw-alias-border-l2);
-  background: var(--watcher-layer, var(--dsw-alias-bg-layer-1));
+  border-left: 1px solid var(--dsw-alias-border-l2);
+  background: var(--dsw-specific-menu);
+  background: rgb(from var(--dsw-specific-menu, #fff) r g b / 1);
+  box-shadow:
+    inset 1px 0 0 color-mix(in srgb, var(--dsw-alias-label-primary) 4.5%, transparent),
+    -18px 0 44px -12px rgba(10, 13, 20, 0.32);
+  animation: watcher-inspector-enter var(--watcher-motion-inspector) var(--watcher-ease-glide);
 }
 
-/* Opening and closing the docked inspector animates this column instead of
- * toggling it, and the detail content moves in its own beat: it leaves first,
- * the column narrows after it is gone. That order is deliberate — the closing
- * edge glides right over the work-path card, so a line of detail text left
- * behind would be cut in half. Children keep their laid-out width, so nothing
- * reflows while the column moves, and closing ends at width 0, which makes the
- * unmount that follows invisible. */
-@media (min-width: 861px) {
-  .inspector {
-    overflow: hidden;
-    animation: watcher-inspector-enter var(--watcher-motion-inspector) var(--watcher-ease-glide);
-  }
-
-  .inspector > * {
-    box-sizing: border-box;
-    width: 438px;
-    animation: watcher-inspector-content-in var(--watcher-motion-content-out) var(--watcher-ease-glide) var(--watcher-motion-inspector) both;
-  }
-
-  .inspector[data-closing] {
-    pointer-events: none;
-    animation: watcher-inspector-exit var(--watcher-motion-inspector) var(--watcher-ease-glide) var(--watcher-motion-content-out) forwards;
-  }
-
-  .inspector[data-closing] > * {
-    animation: watcher-inspector-content-out var(--watcher-motion-content-out) ease-in forwards;
-  }
+.inspector[data-closing] {
+  pointer-events: none;
+  animation: watcher-inspector-exit var(--watcher-motion-inspector) var(--watcher-ease-glide) forwards;
 }
 
 @keyframes watcher-inspector-enter {
-  from { width: 0; }
-}
-
-/* Detail content drifts toward the work path as it leaves, so the motion reads
- * as sliding away rather than being covered. */
-@keyframes watcher-inspector-content-in {
-  from { opacity: 0; transform: translateX(16px); }
-}
-
-@keyframes watcher-inspector-content-out {
-  to { opacity: 0; transform: translateX(16px); }
+  from { opacity: 0; transform: translateX(28px); }
 }
 
 @keyframes watcher-inspector-exit {
-  to { width: 0; }
+  to { opacity: 0; transform: translateX(28px); }
 }
 
 .inspectorHeader {

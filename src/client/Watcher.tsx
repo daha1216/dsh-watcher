@@ -1670,17 +1670,35 @@ function ReadyWatcher({
               )}
 
             <section className={css.workPicture} aria-label="Agent 工作路径" data-ud-check="watcher-work-picture" data-ud-role="panel">
-              <header className={css.pictureHeader}>
-                <div className={css.nowBlock} aria-live="polite">
-                  {picture.running || hasEdgeAlert || summaryState !== '就绪' ? (
-                    <div className={css.eyebrow} data-alert={hasEdgeAlert ? '' : undefined}>
-                      <span>{summaryState}</span>
-                    </div>
-                  ) : null}
-                  <div className={css.now} title={picture.running ? nowLabel : 'DSH-Watcher'}>
-                    {picture.running ? nowLabel : 'DSH-Watcher'}
+              <header className={css.commandBar}>
+                <div className={css.commandRow}>
+                  <div className={css.commandState} aria-live="polite">
+                    <span
+                      className={css.commandDot}
+                      data-state={picture.running ? 'running' : hasEdgeAlert ? 'alert' : 'idle'}
+                      aria-hidden="true"
+                    />
+                    <span className={css.commandStatus} data-alert={hasEdgeAlert ? '' : undefined}>{summaryState}</span>
+                    <span className={css.commandNow} title={picture.running ? nowLabel : 'DSH-Watcher'}>
+                      {picture.running ? nowLabel : 'DSH-Watcher'}
+                    </span>
                   </div>
-                  <div className={css.summary}>
+                  <Pill
+                    className={css.follow}
+                    active={ui.follow}
+                    aria-pressed={ui.follow}
+                    aria-label={ui.follow ? '停止跟随最新工作' : '跟随最新工作'}
+                    onClick={() => {
+                      if (!ui.follow) programmaticScrollRef.current = true
+                      setUi(followRef.current.setFollow(!ui.follow))
+                    }}
+                  >
+                    <IconRefreshOutlineRegular size={12} />
+                    {ui.follow ? '自动跟随' : '浏览历史'}
+                  </Pill>
+                </div>
+                <div className={css.controlRow} aria-label="路径视图设置">
+                  <div className={css.controlCounts}>
                     <span>
                       {snapshot.hasMore && totalTurnCount > picture.turnCount
                         ? `已载入 ${picture.turnCount}/${totalTurnCount} 轮`
@@ -1706,72 +1724,58 @@ function ReadyWatcher({
                       <span role="status">{historyLoad.kind === 'error' ? historyLoad.message : `已载入 ${historyProgress}`}</span>
                     ) : null}
                   </div>
+                  <div className={css.controlViews}>
+                    <div className={css.viewControl}>
+                      <span className={css.viewToolbarLabel}>组织</span>
+                      <div className={css.viewMode} role="group" aria-label="路径组织方式">
+                        <button
+                          type="button"
+                          data-active={observationMode === 'itemized' ? '' : undefined}
+                          aria-pressed={observationMode === 'itemized'}
+                          title="按时间顺序展示每个步骤和每次执行"
+                          onClick={() => chooseObservationMode('itemized')}
+                        >
+                          逐项
+                        </button>
+                        <button
+                          type="button"
+                          data-active={observationMode === 'grouped' ? '' : undefined}
+                          aria-pressed={observationMode === 'grouped'}
+                          title="按同一目标或完全相同的指令归类，展开仍可查看原始执行"
+                          onClick={() => chooseObservationMode('grouped')}
+                        >
+                          归类
+                        </button>
+                      </div>
+                    </div>
+                    <div className={css.viewControl}>
+                      <span className={css.viewToolbarLabel}>层级</span>
+                      <div className={css.viewMode} role="group" aria-label="路径展开深度">
+                        <button
+                          type="button"
+                          data-active={disclosure.depth === 'overview' ? '' : undefined}
+                          aria-pressed={disclosure.depth === 'overview'}
+                          title="展开当前轮次，展示阶段概览；阶段内部保持收起"
+                          onClick={() => chooseDepth('overview')}
+                        >
+                          概览
+                        </button>
+                        <button
+                          type="button"
+                          data-active={disclosure.depth === 'detail' ? '' : undefined}
+                          aria-pressed={disclosure.depth === 'detail'}
+                          title="展开所有轮次、阶段、步骤、模型与推理记录"
+                          onClick={() => chooseDepth('detail')}
+                        >
+                          详情
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <Pill
-                  className={css.follow}
-                  active={ui.follow}
-                  aria-pressed={ui.follow}
-                  aria-label={ui.follow ? '停止跟随最新工作' : '跟随最新工作'}
-                  onClick={() => {
-                    if (!ui.follow) programmaticScrollRef.current = true
-                    setUi(followRef.current.setFollow(!ui.follow))
-                  }}
-                >
-                  <IconRefreshOutlineRegular size={12} />
-                  {ui.follow ? '自动跟随' : '浏览历史'}
-                </Pill>
               </header>
 
               <SessionInsights value={wholeSessionInsights} now={now} running={picture.running} waiting={picture.pendingCount > 0} onEvidence={locateEvidence} tokensPerSecond={liveTokensPerSecond} />
-
-              <div className={css.viewToolbar} aria-label="路径视图设置">
-                <div className={css.viewControl}>
-                  <span className={css.viewToolbarLabel}>组织</span>
-                  <div className={css.viewMode} role="group" aria-label="路径组织方式">
-                    <button
-                      type="button"
-                      data-active={observationMode === 'itemized' ? '' : undefined}
-                      aria-pressed={observationMode === 'itemized'}
-                      title="按时间顺序展示每个步骤和每次执行"
-                      onClick={() => chooseObservationMode('itemized')}
-                    >
-                      逐项
-                    </button>
-                    <button
-                      type="button"
-                      data-active={observationMode === 'grouped' ? '' : undefined}
-                      aria-pressed={observationMode === 'grouped'}
-                      title="按同一目标或完全相同的指令归类，展开仍可查看原始执行"
-                      onClick={() => chooseObservationMode('grouped')}
-                    >
-                      归类
-                    </button>
-                  </div>
-                </div>
-                <div className={css.viewControl}>
-                  <span className={css.viewToolbarLabel}>层级</span>
-                  <div className={css.viewMode} role="group" aria-label="路径展开深度">
-                    <button
-                      type="button"
-                      data-active={disclosure.depth === 'overview' ? '' : undefined}
-                      aria-pressed={disclosure.depth === 'overview'}
-                      title="展开当前轮次，展示阶段概览；阶段内部保持收起"
-                      onClick={() => chooseDepth('overview')}
-                    >
-                      概览
-                    </button>
-                    <button
-                      type="button"
-                      data-active={disclosure.depth === 'detail' ? '' : undefined}
-                      aria-pressed={disclosure.depth === 'detail'}
-                      title="展开所有轮次、阶段、步骤、模型与推理记录"
-                      onClick={() => chooseDepth('detail')}
-                    >
-                      详情
-                    </button>
-                  </div>
-                </div>
-              </div>
 
               {!ui.follow && ui.unread > 0
                 ? (
@@ -1840,12 +1844,15 @@ function ReadyWatcher({
                                   }}
                                 >
                                   <IconChevronRightOutlineRegular size={13} className={css.turnChevron} />
-                                      <span className={css.turnCopy}>
-                                        <span className={css.turnTitleLine}>
-                                          <span className={css.turnTitle}>{turnTitle}</span>
-                                          {showOverviewTag(turnState)
-                                            ? <span className={css.overviewTag} data-state={turnState}>{OVERVIEW_STATE_LABEL[turnState]}</span>
-                                            : null}
+                                  <span className={css.turnNoWrap} aria-hidden="true">
+                                    <span className={css.turnNoLabel}>{turn.turn === 0 ? '准备' : '轮次'}</span>
+                                    <span className={css.turnNo}>{turn.turn === 0 ? '—' : turn.turn}</span>
+                                  </span>
+                                  <span className={css.turnCopy}>
+                                    <span className={css.turnTitleLine}>
+                                      {showOverviewTag(turnState)
+                                        ? <span className={css.overviewTag} data-state={turnState}>{OVERVIEW_STATE_LABEL[turnState]}</span>
+                                        : null}
                                     </span>
                                     <span className={css.turnSummary}>{turnSummary}</span>
                                   </span>
