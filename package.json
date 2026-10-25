@@ -84,7 +84,7 @@
     "@deepseek-ai/dsh-session-stats": ">=0.1.7-rc.1 <0.1.8 || ^0.2.0-rc.1"
   },
   "dependencies": {
-    "zod": "^4.4.3"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "4.0.4",
