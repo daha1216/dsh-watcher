@@ -68,10 +68,9 @@ export const fmtCompact = (n: number) => {
   return fmt(n)
 }
 
-export const dayKey = (ms: number) => {
-  const d = new Date(ms)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+// Single source of truth for local calendar days, shared with the node tests.
+// @ts-ignore TS7016: no declarations for the local .mjs module
+export { dayKey } from '../insights/day-axis.mjs'
 
 export const dayLabel = (key: string) => {
   const [, m, d] = key.split('-')

@@ -1,5 +1,7 @@
 // @ts-ignore TS7016: no declarations for the local .mjs module
 import { estimateUsageRows } from '../insights/pricing.mjs'
+// @ts-ignore TS7016: no declarations for the local .mjs module
+import { previousDayKey, recentDayKeys, windowStart } from '../insights/day-axis.mjs'
 import { PALETTE, WEEKDAYS, dayKey, dayLabel, routeLabel } from './insights-shared.tsx'
 
 export type SessionsScan = { total: number; selected: number; rows: any[] }
@@ -18,7 +20,9 @@ export function analyticsOf(
 ) {
   if (!sessions) return null
   const days = Number(range)
-  const cutoff = Date.now() - days * 86400000
+  // Calendar window, not a rolling 7×24h: the chart plots `days` local days, so
+  // the scan must start at the oldest of those days (see insights/day-axis.mjs).
+  const cutoff = windowStart(Date.now(), days)
   const validRows = sessions.rows.filter((r: any) => r.value && (!r.updatedAt || r.updatedAt >= cutoff))
   const validViews = validRows.map((r: any) => r.value)
   let totalTokens = 0
@@ -184,9 +188,8 @@ export function analyticsOf(
     }
   })
 
-  // 每日活动序列
-  const keys: string[] = []
-  for (let i = days - 1; i >= 0; i--) keys.push(dayKey(Date.now() - i * 86400000))
+  // 每日活动序列（按本地日历日推进，跨夏令时不会重复或跳过某一天）
+  const keys: string[] = recentDayKeys(Date.now(), days)
   const byDay = new Map(keys.map(k => [k, { models: new Map<string, number>(), sessions: 0 }]))
   validRows.forEach((row: any) => {
     // A session without updatedAt has no honest day bucket; counting it as
@@ -205,7 +208,7 @@ export function analyticsOf(
   })
 
   const todayStr = dayKey(Date.now())
-  const yesterdayStr = dayKey(Date.now() - 86400000)
+  const yesterdayStr = previousDayKey(Date.now())
 
   const daySeries = keys.map(key => {
     const bucket = byDay.get(key) ?? { models: new Map(), sessions: 0 }
