@@ -48,10 +48,19 @@ export function useUiLocale() {
   return locale
 }
 
+/** A broken override must degrade to defaults, never break the page render. */
+function readPricingTable() {
+  try {
+    return mergePricing(defaultPricing(), readStoredOverride(globalThis.localStorage))
+  } catch {
+    return defaultPricing()
+  }
+}
+
 export function usePricingTable() {
-  const [table, setTable] = useState(() => mergePricing(defaultPricing(), readStoredOverride(globalThis.localStorage)))
+  const [table, setTable] = useState(readPricingTable)
   useEffect(() => {
-    const update = () => setTable(mergePricing(defaultPricing(), readStoredOverride(globalThis.localStorage)))
+    const update = () => setTable(readPricingTable())
     window.addEventListener('watcher-pricing-settings', update)
     return () => window.removeEventListener('watcher-pricing-settings', update)
   }, [])
