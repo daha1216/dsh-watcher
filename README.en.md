@@ -130,6 +130,14 @@ Plus the 0.4.5 fixes: the inspector back control no longer re-arms follow, the f
 
 Older releases: [CHANGELOG.md](./CHANGELOG.md).
 
+## Upstream
+
+This repository derives from [aa2246740/dsh-watcher](https://github.com/aa2246740/dsh-watcher) (MIT) and continues maintenance from there. Current file split: 112 files upstream, 104 here, of which 20 are byte-identical.
+
+Main changes over upstream: the 0.7.x adversarial-audit fixes (fold stack overflow, `unit`/`currency` pricing, `message.isError`/`toolCallId` shapes, safe markdown), the CI workflow, `AGENTS.md`, the behaviour and contract suites under `tests/`, and the local calendar-day implementation in `src/insights/day-axis.mjs`.
+
+Both upstream and this repository are MIT licensed — see [LICENSE](./LICENSE).
+
 ## Build from source
 
 Skip this for a normal install. Rebuild the committed `lib/` with **pnpm** after TypeScript changes:

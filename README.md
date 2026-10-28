@@ -130,6 +130,14 @@ dsh plugin --profile web remove dsh-watcher
 
 历史版本见 [CHANGELOG.md](./CHANGELOG.md)。
 
+## 上游来源
+
+本仓库派生自 [aa2246740/dsh-watcher](https://github.com/aa2246740/dsh-watcher)（MIT），在其基础上继续维护。当前两边文件分布：上游 112 个、本仓库 104 个，其中 20 个文件逐字节相同。
+
+相对上游的主要改动：0.7.x 的对抗式审计修复（fold 栈溢出、定价 `unit`/`currency`、`message.isError`/`toolCallId` 形状、安全 markdown）、CI 工作流、`AGENTS.md`，以及 `tests/` 下的行为与契约用例和 `src/insights/day-axis.mjs` 的本地日历日实现。
+
+上游与本仓库同为 MIT 协议，见 [LICENSE](./LICENSE)。
+
 ## 从源码构建
 
 日常安装不用这一步。改 TypeScript 后用 **pnpm** 重建已提交的 `lib/`：
